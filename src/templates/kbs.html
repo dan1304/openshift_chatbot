@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>
+        ACT Chatbot Knowlegde Base Management
+    </h1>
+
+    <div>
+        <h4>Submit new kb</h4>
+        <form action={{ url_for('kbs') }} method="POST">
+            <div class="form-row">
+                <div class="col-xs-10 col-md-5">
+                    <label for="kbDesc">KB Description</label>
+                    <textarea class="form-control" id="kbDesc" name='kb_desc' rows="4"
+                        placeholder="Description of the KB" required></textarea>
+
+                </div>
+                <div class="col-xs-10 col-md-5">
+                    <label for="kbResolution">KB Resolution</label>
+                    <textarea class="form-control" id="kbResolution" name='kb_resolution' rows="4"
+                        placeholder="The KB Resolution" required></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="col-md-10 mb-4">
+                    <label for="kbTag">Tags</label>
+                    <input class="form-control" id="kbTag" rows="1" name='kb_tag'
+                        placeholder="#tag1 #tag2 #tag3"></input>
+                </div>
+                <div style="width:550px;" align="left">
+                    <button style="margin: 14px 0px 5px 14px;" class="btn btn-primary" type="submit">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+
+    <div>
+        <!-- <h4>Availabe KBs</h4> -->
+        <div id="table"></div>
+    </div>
+    <script>
+        const tableDiv = document.getElementById('table');
+
+        const updateUrl = (prev, query) => {
+            return prev + (prev.indexOf('?') >= 0 ? '&' : '?') + new URLSearchParams(query).toString();
+        };
+
+        const editableCellAttributes = (data, row, col) => {
+            if (row) {
+                return { contentEditable: 'true', 'data-element-id': row.cells[0].data };
+            }
+            else {
+                return {};
+            }
+        };
+
+        new gridjs.Grid({
+            columns: [
+                { id: 'kbs_id', name: 'ID', sort: false},
+                { id: 'kbs_desc', name: 'DESC', sort: false, 'attributes': editableCellAttributes, search: true },
+                {id: 'kbs_resolution', name: 'RESOLUTION', sort: false, 'attributes': editableCellAttributes },
+                { id: 'kbs_tag', name: 'TAGs', sort: false, 'attributes': editableCellAttributes },
+            ],
+            server: {
+                url: '/api/v2/data',
+                then: results => results.data,
+                total: results => results.total,
+            },
+            search: {
+                server: {
+                    url: (prev, keyword) => `${prev}?search=${keyword}`
+                }
+            },
+            sort: {
+                enabled: true,
+                multiColumn: true,
+                server: {
+                    url: (prev, columns) => {
+                        const columnIds = ['kbs_id', 'kbs_desc', 'kbs_resolution', 'kbs_tag'];
+                        const sort = columns.map(col => (col.direction === 1 ? '+' : '-') + columnIds[col.index]);
+                        return updateUrl(prev, { sort });
+                    },
+                },
+            },
+            pagination: {enabled: true,
+            limit: 5,},
+
+        style: {
+                table: {
+                    autoWidth: false,
+                    // border: '1px solid #ccc'
+                },
+                th: {
+                    // 'background-color': 'rgba(0, 0, 0, 0.1)',
+                    color: '#000',
+                    width: '100px',
+                    overflow: 'hidden',
+                    // 'border-bottom': '3px solid #ccc',
+                    'text-align': 'center'
+                },
+                td: {
+                    // 'text-align': 'center'
+                }
+            }
+        }).render(tableDiv);
+        let savedValue;
+
+        tableDiv.addEventListener('focusin', ev => {
+            if (ev.target.tagName === 'TD') {
+                savedValue = ev.target.textContent;
+            }
+        });
+
+        tableDiv.addEventListener('focusout', ev => {
+            if (ev.target.tagName === 'TD') {
+                if (savedValue !== ev.target.textContent) {
+                    fetch('/api/v2/data', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: ev.target.dataset.elementId,
+                            [ev.target.dataset.columnId]: ev.target.textContent
+                        }),
+                    });
+                }
+                savedValue = undefined;
+            }
+        });
+
+        tableDiv.addEventListener('keydown', ev => {
+            if (ev.target.tagName === 'TD') {
+                if (ev.key === 'Escape') {
+                    ev.target.textContent = savedValue;
+                    ev.target.blur();
+                }
+                else if (ev.key === 'Enter') {
+                    ev.preventDefault();
+                    ev.target.blur();
+                }
+            }
+        });
+    </script>
+{% endblock %}

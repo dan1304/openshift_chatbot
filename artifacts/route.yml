@@ -1,0 +1,21 @@
+
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: act-bot-equator-default-performance
+  namespace: equator-default-performance
+  labels:
+    exposure: public
+spec:
+  host: act-bot.public-a-th1n.ascendmoney.io
+  path: /
+  to:
+    kind: Service
+    name: act-bot
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

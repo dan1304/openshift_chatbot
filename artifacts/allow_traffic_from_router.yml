@@ -1,0 +1,22 @@
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: act-bot-equator-default-performance-allow-router-network-policy
+  namespace: equator-default-performance
+  labels:
+    appName: act-bot
+spec:
+  podSelector:
+    matchLabels:
+      name: act-bot
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
+      from:
+        - namespaceSelector:
+            matchLabels:
+              envName: default
+  policyTypes:
+    - Ingress
+

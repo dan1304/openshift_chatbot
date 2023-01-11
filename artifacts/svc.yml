@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: act-bot
+  namespace: "equator-default-performance"
+spec:
+  ports:
+    - name: http
+      port: 8080
+      protocol: "TCP"
+      targetPort: 8080
+  selector:
+    name: act-bot
+  sessionAffinity: None
+  type: ClusterIP

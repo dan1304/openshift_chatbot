@@ -1,0 +1,9 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: act-bot-configmap
+  namespace: equator-default-performance
+data: 
+  okd_host: https://api.c-th1n.ascendmoney.io:6443
+  ocp_host: https://api.a-th1n.ascendmoney.io:6443
+  sonarqube_host: https://scs.security.ascendmoney.io

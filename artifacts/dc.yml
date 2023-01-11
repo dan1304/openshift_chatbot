@@ -1,0 +1,95 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: act-bot
+  namespace: equator-default-performance
+labels:
+  deploymentconfig: act-bot
+  name: act-bot
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    name: act-bot
+    deploymentconfig: act-bot
+  template:
+    metadata:
+      labels:
+        name: act-bot
+        deploymentconfig: act-bot
+    spec:
+      affinity:
+       ​ podAntiAffinity:
+          ​preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            ​podAffinityTerm:
+              ​labelSelector:
+                matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                  - act-bot
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - env:
+        - name: USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: act-bot-secret
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: act-bot-secret
+        - name: SONAR_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: sonar_token
+              name: act-bot-secret
+        - name: OKD_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: okd_host
+              name: act-bot-configmap
+        - name: OCP_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: ocp_host
+              name: act-bot-configmap
+        - name: SONAR_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: sonarqube_host
+              name: act-bot-configmap
+        image: quay.io/actvn/act_bot:20221225
+        ports:
+          - name: http
+            containerPort: 8080
+            protocol: "TCP"
+        imagePullPolicy: Always
+        name: act-bot
+        resources:
+          limits:
+            cpu: 512m
+            memory: 512Mi
+          requests:
+            cpu: 200m
+            memory: 512Mi
+        securityContext:
+          capabilities: {}
+          privileged: false
+      dnsPolicy: ClusterFirst
+      serviceAccount: acm-deployer
+      serviceAccountName: acm-deployer
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      nodeSelector:
+        deployment-nodegroup-appscope: equator
+        deployment-nodegroup-env: performance
+
+  test: false
+  triggers:
+  - type: ConfigChange
